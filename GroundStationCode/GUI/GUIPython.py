@@ -276,7 +276,10 @@ class DataProcessing:
         self.pos_count = []
 
         self.t1 = threading.Thread(target = self.live_dat, daemon = True)
+        self.t2 = threading.Thread(target = self.plot_data, daemon = True)
         self.t1.start()
+        self.t2.start()
+        self.t2.join()
 
         self.publish5()
 
@@ -284,6 +287,20 @@ class DataProcessing:
     def publish5(self):
         self.frame5.grid(row=3, column=0, sticky=NE)
         self.canvas.get_tk_widget().grid()
+
+    def plot_data(self):
+
+        self.ax[0, 0].scatter(self.pos_count, self.U1datatrim)
+        self.ax[0, 1].scatter(self.pos_count, self.U3datatrim)
+        self.ax[1, 0].scatter(self.pos_count, self.U4datatrim)
+        # self.ax[1,1].scatter(self.pos_count, self.xdatatrim)
+        self.ax[1, 1].scatter(self.pos_count, self.currenttrim)
+
+        self.ax[0, 0].set_title('U1 Temperature')
+        self.ax[0, 1].set_title('U3 Temperature')
+        self.ax[1, 0].set_title('U4 Temperature')
+        # self.ax[1,1].set_title('X Acceleration')
+        self.ax[1, 1].set_title('Current (Amps)')
 
 
     def live_dat(self):
@@ -358,20 +375,20 @@ class DataProcessing:
                 
 
 
-                    self.ax[0,0].scatter(self.pos_count, self.U1datatrim)
-                    self.ax[0,1].scatter(self.pos_count, self.U3datatrim)
-                    self.ax[1,0].scatter(self.pos_count, self.U4datatrim)
-                    #self.ax[1,1].scatter(self.pos_count, self.xdatatrim)
-                    self.ax[1,1].scatter(self.pos_count, self.currenttrim)
-                    
-
-
-
-                    self.ax[0,0].set_title('U1 Temperature')
-                    self.ax[0,1].set_title('U3 Temperature')
-                    self.ax[1,0].set_title('U4 Temperature')
-                    #self.ax[1,1].set_title('X Acceleration')
-                    self.ax[1,1].set_title('Current (Amps)')
+                    # self.ax[0,0].scatter(self.pos_count, self.U1datatrim)
+                    # self.ax[0,1].scatter(self.pos_count, self.U3datatrim)
+                    # self.ax[1,0].scatter(self.pos_count, self.U4datatrim)
+                    # #self.ax[1,1].scatter(self.pos_count, self.xdatatrim)
+                    # self.ax[1,1].scatter(self.pos_count, self.currenttrim)
+                    #
+                    #
+                    #
+                    #
+                    # self.ax[0,0].set_title('U1 Temperature')
+                    # self.ax[0,1].set_title('U3 Temperature')
+                    # self.ax[1,0].set_title('U4 Temperature')
+                    # #self.ax[1,1].set_title('X Acceleration')
+                    # self.ax[1,1].set_title('Current (Amps)')
                    
 
 
