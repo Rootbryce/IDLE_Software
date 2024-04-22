@@ -1,4 +1,6 @@
 #include <Wire.h>
+#include <stdio.h>
+#include <math.h>
 
 
 // Addreses of each temp sensor (3) and accelerometer
@@ -6,6 +8,9 @@ const int U1Temp = 0x48; // Temp sensor below accelerometer, middle right of boa
 const int U3Temp = 0x4F; // Temp sensor at top left of board
 const int U4Temp = 0x4D; // Temp sensor at bottom left of board
 int accelMeter = 0x1D; // Accelerometer
+int tempCutOff = 60; // Max temp limit 
+float g_z;
+float g_y;
 
 // LinAct and Motor Control
 // Lin actuator pins
@@ -26,6 +31,10 @@ float msDelay = 1500;
 int messageInt;
 
 float currentSens = 0.0;
+
+float voltage[100];
+
+
 
 
 
@@ -174,6 +183,41 @@ void loop()
 
   Wire.endTransmission();
 
+  //Convert analog accel data into g's
+  // Y-data calcs
+  float ydata = float(accelData[1]);
+  ydata = ydata - 3;
+  if (ydata < 0){
+    ydata = 255 + ydata;
+  }
+  if (ydata >= 0 && ydata <= 127){
+    g_y = 1-(ydata/64);
+  }
+  else{
+    g_y = 2* ((ydata - 128)/128) -1;
+  }
+
+  // Z-data calcs
+  float zdata = float(accelData[2]);
+  if (zdata >= 0 && zdata <= 127){
+    g_z = 1 - (zdata/64);
+  }else{
+    g_z = 2 * ((zdata - 128)/128) - 1;
+  }
+
+  // Set bounds
+  if(g_z > 1){
+    g_z = 1;
+  }else if (g_z < -1){
+    g_z = -1;
+  }
+
+  if(g_y > 1){
+    g_y = 1;
+  }else if (g_y < -1){
+    g_y = -1;
+  }
+
   // Output data to serial monitor
   Serial.print(cTempU1);
   Serial.print(", ");
@@ -188,22 +232,46 @@ void loop()
     Serial.print(", ");
   }
 
-  currentSens = ((5 * (float(analogRead(A0)) / 1023)) - 2.5) / 0.05;
-  Serial.print(currentSens);
+  //currentSens = ((5 * (float(analogRead(A0)) / 1023)) - 2.5) / 0.05;
+  //Serial.print(currentSens);
   
-  Serial.println();
+  voltage[counter] = (5 * (float(analogRead(A1))) / 1024);
+
+  float sum = 0.0;
+  for(int i = 0; i < 100; i++){
+    sum += voltage[i];
+  }
+  //sum = sum / 1024;
+
+  //currentSens = ((sum / 100) - 2.5) / 0.05;
+  Serial.print((sum / 100), 4);
+  
+  counter = (++counter) % 100;
+
+
+  // Serial.println();
 
   // For Motor Control: ##################################################
 
   if(Serial.available() > 0){
     message = Serial.readStringUntil('\n');
-    //Serial.println(String(message.c_str()));
   }else{
     message = "No command sent";
   }
 
   // Init variables for drum
   messageInt = message.toInt();
+
+  Serial.print("," + String(messageInt));
+  Serial.println();
+
+  // Initialize tilt
+  // ydata = ydata - 0.01;
+  // zdata = zdata - 0.0.1;
+  // Serial.println(ydata);
+  // Serial.println(zdata);
+  float tiltY = acosf(g_y)*180/3.14;
+  float tiltZ = acosf(g_z)*180/3.14;
 
   if (message == "UP"){
     setOut();
@@ -226,11 +294,17 @@ void loop()
   }else if (message == "Sleep Mode"){
     setOut();
     msDelay = 1500;
- }else{
-    //Serial.println("Undefined command received: " + message);
-  }
- 
-
+ }else if (cTempU1 > tempCutOff || cTempU3 > tempCutOff || cTempU4 > tempCutOff){
+    msDelay = 1500;
+    //Serial.println("Safe Mode");
+ }
+ else if ( tiltY > 20.0 || tiltZ > 20.0){
+    setOut();
+    msDelay = 1500;
+ }
+  //delay(1000); // GET RID OF THIS LATER PLASEEEE
+  //Serial.println("Y: " + String(tiltY) + ", Z:" + String(tiltZ));
+  //Serial.println("Y G force: " + String(g_y) + ", Z G force: " + String(g_z));
   // Drive drum motor
   digitalWrite(3, HIGH);
   /*

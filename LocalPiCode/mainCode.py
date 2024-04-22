@@ -81,7 +81,7 @@ class dataInterchange:
         while not False:
             # Receiving data
             if ser.in_waiting > 0: # returns the number of bytes received
-                time.sleep(0.1)
+                time.sleep(0.01)
                 if(ser.out_waiting > self.buffSize):
                     print('BUFFER OVERFLOW')
                     ser.reset_output_buffer()

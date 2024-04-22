@@ -5,6 +5,7 @@
 # Wigets: Buttons and stuff like that seen on the frames
 import threading
 import time
+import math
 import csv
 import socket
 from tkinter import *
@@ -264,43 +265,59 @@ class DataProcessing:
         self.UDPClient = UDPClient
         self.serverAddress = serverAddress
         self.fig, self.ax = plt.subplots(2,2,figsize=(5, 4))
+        self.fig2, self.ax2 = plt.subplots(2,2,figsize=(5, 4))
         self.frame5 = LabelFrame(root, text="Live Plot", padx=1, pady=1)
+        self.frame7 = LabelFrame(root, text="Live Plot 2", padx=1, pady=1)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame5)
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.frame7)
         self.threading = True
 
         self.U1datatrim = []
         self.U3datatrim = []
         self.U4datatrim = []
         self.xdatatrim = []
+        self.ydatatrim = []
+        self.zdatatrim = []
+        #self.tilttrim = []
         self.currenttrim = []
         self.pos_count = []
 
         self.t1 = threading.Thread(target = self.live_dat, daemon = True)
-        self.t2 = threading.Thread(target = self.plot_data, daemon = True)
+        # self.t2 = threading.Thread(target = self.plot_data, daemon = True)
         self.t1.start()
-        self.t2.start()
-        self.t2.join()
+        # self.t2.start()
+        # self.t2.join()
 
         self.publish5()
 
 
     def publish5(self):
         self.frame5.grid(row=3, column=0, sticky=NE)
+        self.frame7.grid(row=3, column=3, sticky=NE)
+
         self.canvas.get_tk_widget().grid()
+        self.canvas2.get_tk_widget().grid()
+        
 
-    def plot_data(self):
+    # def plot_data(self):
 
-        self.ax[0, 0].scatter(self.pos_count, self.U1datatrim)
-        self.ax[0, 1].scatter(self.pos_count, self.U3datatrim)
-        self.ax[1, 0].scatter(self.pos_count, self.U4datatrim)
-        # self.ax[1,1].scatter(self.pos_count, self.xdatatrim)
-        self.ax[1, 1].scatter(self.pos_count, self.currenttrim)
+    #     while True:
 
-        self.ax[0, 0].set_title('U1 Temperature')
-        self.ax[0, 1].set_title('U3 Temperature')
-        self.ax[1, 0].set_title('U4 Temperature')
-        # self.ax[1,1].set_title('X Acceleration')
-        self.ax[1, 1].set_title('Current (Amps)')
+    #         self.ax[0,0].scatter(self.pos_count, self.U1datatrim)
+    #         self.ax[0,1].scatter(self.pos_count, self.U3datatrim)
+    #         self.ax[1,0].scatter(self.pos_count, self.U4datatrim)
+    #         self.ax[1,1].scatter(self.pos_count, self.currenttrim)
+    #         self.ax2[0,0].scatter(self.pos_count, self.xdatatrim)
+    #         self.ax2[0,1].scatter(self.pos_count, self.ydatatrim)
+    #         self.ax2[1,0].scatter(self.pos_count, self.zdatatrim)
+
+    #         self.ax[0,0].set_title('U1 Temperature')
+    #         self.ax[0,1].set_title('U3 Temperature')
+    #         self.ax[1,0].set_title('U4 Temperature')
+    #         self.ax[1,1].set_title('Current (Amps)')
+    #         self.ax2[0,0].set_title('X Acceleration')
+    #         self.ax2[0,1].set_title('Y Acceleration')
+    #         self.ax2[1,0].set_title('Z Acceleration')
 
 
     def live_dat(self):
@@ -337,6 +354,18 @@ class DataProcessing:
                     U3data = temp_values[1]
                     U4data = temp_values[2]
                     xdata = acc_values[0]
+                    ydata = acc_values[1]
+                    zdata = acc_values[2]
+
+                    # if zdata >= 0 and zdata <= 127:
+                    #     g_z = 1 - (zdata/64)
+
+                    # else: 
+                    #     g_z = 2 * ((zdata - 128)/128) - 1
+
+                    
+                    #tilt = (math.asin(zdata)/math.pi)*180
+                    #print("Tilt" + str(tilt))
                     #current = current_values
                     current = (5 * (voltage_values/1023) - 2.46) / 0.05
                     
@@ -346,18 +375,28 @@ class DataProcessing:
                         self.U3datatrim.append(U3data)
                         self.U4datatrim.append(U4data)
                         self.xdatatrim.append(xdata)
+                        self.ydatatrim.append(ydata)
+                        self.zdatatrim.append(zdata)
+                        #self.tilttrim.append(tilt)
                         self.pos_count.append(pos_count)
                         self.currenttrim.append(current)
                         self.U1datatrim = self.U1datatrim[-maxPoints:]
                         self.U3datatrim = self.U3datatrim[-maxPoints:]
                         self.U4datatrim = self.U4datatrim[-maxPoints:]
                         self.xdatatrim = self.xdatatrim[-maxPoints:]
+                        self.ydatatrim = self.ydatatrim[-maxPoints:]
+                        self.zdatatrim = self.zdatatrim[-maxPoints:]
+                        #self.tilttrim = self.tilttrim[-maxPoints:]
                         self.pos_count = self.pos_count[-maxPoints:]
                         self.currenttrim = self.currenttrim[-maxPoints:]
                         self.ax[0,0].cla()
                         self.ax[0,1].cla()
                         self.ax[1,0].cla()
                         self.ax[1,1].cla()
+                        self.ax2[0,0].cla()
+                        self.ax2[0,1].cla()
+                        self.ax2[1,0].cla()
+                        self.ax2[1,1].cla()
                     
 
                     except:
@@ -365,34 +404,48 @@ class DataProcessing:
                         self.U3datatrim.append(U3data)
                         self.U4datatrim.append(U4data)
                         self.xdatatrim.append(xdata)
+                        self.ydatatrim.append(ydata)
+                        self.zdatatrim.append(zdata)
                         self.pos_count.append(pos_count)
                         self.currenttrim.append(current)
+                        #self.tilttrim.append(tilt)
                         self.ax[0,0].cla()
                         self.ax[0,1].cla()
                         self.ax[1,0].cla()
                         self.ax[1,1].cla()
+                        self.ax2[0,0].cla()
+                        self.ax2[0,1].cla()
+                        self.ax2[1,0].cla()
+                        self.ax2[1,1].cla()
                         
                 
 
 
-                    # self.ax[0,0].scatter(self.pos_count, self.U1datatrim)
-                    # self.ax[0,1].scatter(self.pos_count, self.U3datatrim)
-                    # self.ax[1,0].scatter(self.pos_count, self.U4datatrim)
-                    # #self.ax[1,1].scatter(self.pos_count, self.xdatatrim)
-                    # self.ax[1,1].scatter(self.pos_count, self.currenttrim)
-                    #
-                    #
-                    #
-                    #
-                    # self.ax[0,0].set_title('U1 Temperature')
-                    # self.ax[0,1].set_title('U3 Temperature')
-                    # self.ax[1,0].set_title('U4 Temperature')
-                    # #self.ax[1,1].set_title('X Acceleration')
-                    # self.ax[1,1].set_title('Current (Amps)')
+                    self.ax[0,0].scatter(self.pos_count, self.U1datatrim)
+                    self.ax[0,1].scatter(self.pos_count, self.U3datatrim)
+                    self.ax[1,0].scatter(self.pos_count, self.U4datatrim)
+                    self.ax[1,1].scatter(self.pos_count, self.currenttrim)
+                    self.ax2[0,0].scatter(self.pos_count, self.xdatatrim)
+                    self.ax2[0,1].scatter(self.pos_count, self.ydatatrim)
+                    self.ax2[1,0].scatter(self.pos_count, self.zdatatrim)
+                    #self.ax2[1,1].scatter(self.pos_count, self.tilttrim)
+                    
+                    
+                    
+                    self.ax[0,0].set_title('U1 Temperature')
+                    self.ax[0,1].set_title('U3 Temperature')
+                    self.ax[1,0].set_title('U4 Temperature')
+                    self.ax[1,1].set_title('Current (Amps)')
+                    self.ax2[0,0].set_title('X Acceleration')
+                    self.ax2[0,1].set_title('Y Acceleration')
+                    self.ax2[1,0].set_title('Z Acceleration')
+
+                    #self.ax2[1,1].set_title('Tilt')
                    
 
 
                     self.canvas.draw()
+                    self.canvas2.draw()
                     writer.writerow(values)
                     data_file.flush()
 
@@ -513,9 +566,12 @@ class ButtonsLA():
              pass
 
     def publish7(self):
-        self.frame9.grid(row=3, column=3, sticky=N)
-        self.upButton.grid(row=4, column=3, sticky=N)
-        self.downButton.grid(row=4, column=4, sticky=N)
+        # self.frame9.grid(row=3, column=3, sticky=N)
+        # self.upButton.grid(row=4, column=3, sticky=N)
+        # self.downButton.grid(row=4, column=4, sticky=N)
+        self.frame9.grid(row=3, column=4, sticky=N)
+        self.upButton.grid(row=4, column=4, sticky=N)
+        self.downButton.grid(row=4, column=5, sticky=N)
 
 
 def UpdateElapsedTime():
